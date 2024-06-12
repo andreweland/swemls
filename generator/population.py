@@ -78,11 +78,13 @@ CREATININE_DISTRIBUTIONS = {
     ],
 }
 
-# AKI algorithm
+# The NHS reference AKI detection algorithm, described here:
 # https://www.england.nhs.uk/wp-content/uploads/2014/06/psa-aki-alg.pdf
-# AKI algorithm basically alerts on an increase of 2.0
-# Introduce false negatives by saying ratio should be lower for older people
-# Introduce false positives by saying ration should be higher for young adults people
+# basically alerts on an increase of 2.0
+# We introduce false negatives by saying ratio should be lower for older people,
+# and false positives by saying ration should be higher for young adults people.
+# This isn't intended to be clinically accurate, it's just to introduce a signal
+# for machine learning models to find.
 
 AKI_CREATININE_MULTIPLIERS = [
     ((0, 18), 2.0, 2.6),
