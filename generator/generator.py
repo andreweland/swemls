@@ -160,7 +160,7 @@ def inject_aki_blood_test_events(events, by_mrn, epoch, delay):
             else:
                 raise AssertionError()
             if len(previous_results.get(mrn, [])) > 0 and not mrn in had_aki and random.random() < BASE_AKI_PROBABILTY * age_factor:
-                result = population.choose_creatinine_for_aki(person, previous_results, epoch)
+                result = population.choose_creatinine_for_aki(person, previous_results[person.mrn], epoch)
                 yield (now, (EVENT_BLOOD_TEST_AKI, mrn, result))
                 replaced = True
                 had_aki.add(mrn)

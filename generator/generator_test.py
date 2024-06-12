@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import csv
 import sys
 import re
 import tempfile
@@ -7,6 +8,7 @@ import shutil
 import subprocess
 
 NHS_F3_THRESHOLD = 0.7
+CREATININE_UPPER_LIMIT = 1000
 
 def run_integration_test(work_directory):
     r = subprocess.run(["./generator/nhs.py", "--test"])
@@ -15,10 +17,19 @@ def run_integration_test(work_directory):
         return False
     r = subprocess.run(["./generator/generator.py", "--days=25", f"--output={work_directory}"])
     if r.returncode != 0:
-        print("generate-training-data: failed")
+        print("generator: failed")
         return False
-    aki_predictions_csv = f"{work_directory}/aki_predictions.csv"
     training_csv = f"{work_directory}/training.csv"
+    with open(training_csv) as f:
+        r = csv.reader(f)
+        headers = next(r)
+        columns = [i for (i, header) in enumerate(headers) if header.startswith("creatinine_result_")]
+        for row in r:
+            for column in columns:
+                if len(row[column]) > 0 and float(row[column]) > CREATININE_UPPER_LIMIT:
+                    print(f"generator: bad creatinine value: {float(row[column])}")
+                    return False
+    aki_predictions_csv = f"{work_directory}/aki_predictions.csv"
     r = subprocess.run(["./generator/nhs.py", f"--input={training_csv}", f"--output={aki_predictions_csv}"])
     if r.returncode != 0:
         print("nhs: prediction failed")
