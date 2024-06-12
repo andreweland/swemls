@@ -1,0 +1,131 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>{{.Title}}</title>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;500"/>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lato:wght@300,500"/>
+        <link rel="stylesheet" href="/simulator.css"/>
+        <style type="text/css">
+            th {
+                text-align: left;
+                font-weight: 500;
+            }
+            td {
+                font-weight: 300;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>{{.Title}}</h1>
+        {{if .Metrics}}
+        <h2>Metrics</h2>
+        <table>
+            <tr>
+                <th>Messages sent</th><td>{{.Metrics.MessagesSent}}</td>
+            </tr>
+            <tr>
+                <th>Results sent</th><td>{{.Metrics.ResultsSent}}</td>
+            </tr>
+            <tr>
+                <th>Queue</th><td>{{.Metrics.Queue}}</td>
+            </tr>
+            <tr>
+                <th>True positives</th><td>{{.Metrics.Pages.TruePositives}}</td>
+            </tr>
+            <tr>
+                <th>False positives</th><td>{{.Metrics.Pages.FalsePositives}}</td>
+            </tr>
+            <tr>
+                <th>False negatives</th><td>{{.Metrics.Pages.FalseNegatives}}</td>
+            </tr>
+            <tr>
+                <th>F3</th><td>{{.Metrics.Pages.F3Score}}</td>
+            </tr>
+            <tr>
+                <th>NHS true positives</th><td>{{.Metrics.NHS.TruePositives}}</td>
+            </tr>
+            <tr>
+                <th>NHS False positives</th><td>{{.Metrics.NHS.FalsePositives}}</td>
+            </tr>
+            <tr>
+                <th>NHS False negatives</th><td>{{.Metrics.NHS.FalseNegatives}}</td>
+            </tr>
+            <tr>
+                <th>NHS F3</th><td>{{.Metrics.NHS.F3Score}}</td>
+            </tr>
+            <tr>
+                <th>Latecy last/50/90</th><td>{{.Metrics.Latency}}s / {{.Metrics.Latency50}}s / {{.Metrics.Latency90}}s</td>
+            </tr>
+            <tr>
+                <th>Connected</th>
+                {{if .Metrics.Connected}}
+                <td>✅</td>
+                {{else}}
+                <td>❌</td>
+                {{end}}
+            </tr>
+            {{if .Metrics.LastError}}
+            <tr>
+                <th>Last error</th><td>{{.Metrics.LastError}}</td>
+            </tr>
+            {{end}}
+        {{end}}
+        </table>
+        {{if .Group}}
+        <section id="buttons">
+            <form action="/group/{{.Group.Name}}" method="POST">
+                <input type="hidden" name="e" value="rewind"/>
+                <input type="submit" value="Rewind"/>
+            </form>
+            <form action="/group/{{.Group.Name}}" method="POST">
+                <input type="hidden" name="e" value="disconnect"/>
+                <input type="submit" value="Disconnect"/>
+            </form>
+        </section>
+        {{end}}
+        {{if .Events}}
+        <h2>Events</h2>
+        <table>
+        <tr>
+            <th>Event</th>
+            <th>Real</th>
+            <th>Simulated</th>
+            <th></th>
+        </tr>
+        {{range .Events}}
+            <tr>
+                <td>{{.Type}}</td>
+                <td>{{.RealTime.Format "02 Jan 2006 15:04"}}</td>
+                <td>{{.SimulatedTime.Format "02 Jan 2006 15:04"}}</td>
+                {{if .Detail}}
+                <td>{{.Detail}}</td>
+                {{else}}
+                <td>{{.Index}}</td>
+                {{end}}
+            </tr>
+        {{end}}
+        </table>
+        {{end}}
+        {{if .Groups}}
+        <table>
+            {{range .Groups}}
+            <tr>
+                <th><a href="/group/{{.Group.Name}}">{{.Group.Name}}</a></th>
+                {{if .Metrics.Connected}}
+                <td>✅</td>
+                {{else}}
+                <td>❌</td>
+                {{end}}
+                <td>{{.ConnectedTime}}</td>
+                <td>{{.Metrics.MessagesSent}}</td>   
+                {{if .Metrics.LastError}}
+                <td>{{.Metrics.LastError}}</td>
+                {{else}}
+                <td></td>
+                {{end}}
+            </tr>
+            {{end}}
+        </table>
+        {{end}}
+    </body>
+</html>
