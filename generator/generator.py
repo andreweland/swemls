@@ -388,12 +388,12 @@ MALE_FORENAMES_FILENAME = "male-forenames.txt"
 
 MLLP_OUTPUT_FILENAME = "messages.mllp"
 HISTORY_OUTPUT_FILENAME = "history.csv"
-AKI_OUTPUT_FILENAME = "aki.csv"
+AKI_OUTPUT_FILENAME = "akis.csv"
 TRAINING_OUTPUT_FILENAME = "training.csv"
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--data", default="data")
+    parser.add_argument("--data", default="../data")
     parser.add_argument("--history", default=3 * 30, type=int)
     parser.add_argument("--days", default=365, type=int)
     parser.add_argument("--mean_daily_admits", default=30, type=int)

@@ -1,0 +1,20 @@
+# Data licensing
+
+Datasets are cached here for ease of use during synthetic data generation, but have their own licensing terms. Specifically, while the code in this repo has been released under the terms of the [Apache license](../LICENSE), this supporting data isn't. Use of this data does not, however, place contraints on use of the generated synthetic data.
+
+* mye2-persons.csv
+
+  This dataset originates from the UK census [mid-year population estimates](https://www.ons.gov.uk/peoplepopulationandcommunity/populationandmigration/populationestimates/datasets/populationestimatesforukenglandandwalesscotlandandnorthernireland). Governed by the [census license](https://www.ons.gov.uk/census/2001censusandearlier/dataandproducts/copyrightandlicensing).
+
+* male-forenames.txt
+
+  This dataset originates from the UK Office for National Statistics [Baby names for boys in England and Wales](https://www.ons.gov.uk/peoplepopulationandcommunity/birthsdeathsandmarriages/livebirths/datasets/babynamesenglandandwalesbabynamesstatisticsboys). Governed by the [census license](https://www.ons.gov.uk/census/2001censusandearlier/dataandproducts/copyrightandlicensing).
+dataandproducts/copyrightandlicensing).
+
+* female-forenames.txt
+
+  This dataset originates from the UK Office for National Statistics [Baby names for girls in England and Wales](https://www.ons.gov.uk/peoplepopulationandcommunity/birthsdeathsandmarriages/livebirths/datasets/babynamesenglandandwalesbabynamesstatisticsgirls). Governed by the [census license](https://www.ons.gov.uk/census/2001censusandearlier/dataandproducts/copyrightandlicensing).
+
+* surnames.txt
+
+  This dataset originates from the UK Office for National Statistics [500 most common surnames in England and Wales](https://www.ons.gov.uk/aboutus/transparencyandgovernance/freedomofinformationfoi/500mostcommonsurnamesinenglandandwales). Governed by the [census license](https://www.ons.gov.uk/census/2001censusandearlier/dataandproducts/copyrightandlicensing).

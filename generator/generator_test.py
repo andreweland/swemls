@@ -11,11 +11,11 @@ NHS_F3_THRESHOLD = 0.7
 CREATININE_UPPER_LIMIT = 1000
 
 def run_integration_test(work_directory):
-    r = subprocess.run(["./generator/nhs.py", "--test"])
+    r = subprocess.run(["./nhs.py", "--test"])
     if r.returncode != 0:
         print("nhs: self test failed")
         return False
-    r = subprocess.run(["./generator/generator.py", "--days=25", f"--output={work_directory}"])
+    r = subprocess.run(["./generator.py", "--days=25", f"--output={work_directory}"])
     if r.returncode != 0:
         print("generator: failed")
         return False
@@ -30,11 +30,11 @@ def run_integration_test(work_directory):
                     print(f"generator: bad creatinine value: {float(row[column])}")
                     return False
     aki_predictions_csv = f"{work_directory}/aki_predictions.csv"
-    r = subprocess.run(["./generator/nhs.py", f"--input={training_csv}", f"--output={aki_predictions_csv}"])
+    r = subprocess.run(["./nhs.py", f"--input={training_csv}", f"--output={aki_predictions_csv}"])
     if r.returncode != 0:
         print("nhs: prediction failed")
         return False
-    r = subprocess.run(["./generator/score.py", f"--expected={training_csv}", f"--predictions={aki_predictions_csv}"], capture_output=True)
+    r = subprocess.run(["./score.py", f"--expected={training_csv}", f"--predictions={aki_predictions_csv}"], capture_output=True)
     if r.returncode != 0:
         print("score: prediction failed")
         return False
