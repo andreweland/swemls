@@ -1319,7 +1319,7 @@ func main() {
 	addrFlag := flag.String("addr", "0.0.0.0", "Address on which to bind")
 	groupsFlag := flag.String("groups", "", "Group assignments")
 	stateFlag := flag.String("state", "", "Save simulator state to this directory")
-	realtimeFlag := flag.Bool("realtime", false, "Replay messages in real time")
+	replayInRealtimeFlag := flag.Bool("replay-in-real-time", false, "Replay messages in real time")
 	htmlFlag := flag.String("html", ".", "Directory for HTML content")
 	realTimeFlag := flag.String("real-time", "", "Real reference time, for calculating simulated start time")
 	simulatedTimeFlag := flag.String("simulated-time", "", "Simulated reference time, for calculating simulated start time")
@@ -1435,7 +1435,7 @@ func main() {
 			AKIs:                   akis.AKIs,
 			NHSDetectedAKIs:        akis.NHSDetectedAKIs,
 			StartSimulatedTime:     start,
-			ReplayInRealTime:       *realtimeFlag,
+			ReplayInRealTime:       *replayInRealtimeFlag,
 			RewindOnNewConnections: *rewindFlag,
 			EventLogFilename:       logFilename,
 			Context:                ctx,
