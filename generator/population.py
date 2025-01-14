@@ -81,8 +81,9 @@ CREATININE_DISTRIBUTIONS = {
 # The NHS reference AKI detection algorithm, described here:
 # https://www.england.nhs.uk/wp-content/uploads/2014/06/psa-aki-alg.pdf
 # basically alerts on an increase of 2.0
-# We introduce false negatives by saying ratio should be lower for older people,
-# and false positives by saying ration should be higher for young adults people.
+# We introduce false negatives by setting the ratio lower for
+# older people, and false positives by setting the ratio higher for
+# young adults people.
 # This isn't intended to be clinically accurate, it's just to introduce a signal
 # for machine learning models to find.
 
@@ -102,17 +103,17 @@ BASELINE_CREATININE_MULTIPLIERS = [
     ((30, 100), 1.0, 1.0),
 ]
 
-def choose_creatinine_for_aki(person, previous_results, epoch):
+def choose_creatinine_for_aki(person, previous_results, epoch, aki_creatinine_multipliers):
     age_years = person.age_years(epoch)
-    for ((age_begin, age_end), low, high) in AKI_CREATININE_MULTIPLIERS:
+    for ((age_begin, age_end), low, high) in aki_creatinine_multipliers:
         if age_years >= age_begin and age_years < age_end:
             factor = random.uniform(low, high)
     return statistics.median(previous_results) * factor
 
-def _choose_creatinine_baseline(person, epoch):
+def _choose_creatinine_baseline(person, epoch, baseline_creatinine_multipliers):
     creatinine_multipler = 1.0
     age_years = person.age_years(epoch)
-    for ((age_begin, age_end), low, high) in BASELINE_CREATININE_MULTIPLIERS:
+    for ((age_begin, age_end), low, high) in baseline_creatinine_multipliers:
         if age_years >= age_begin and age_years <= age_end:
             creatinine_multipler = random.uniform(low, high)
     for ((age_begin, age_end), mu, sigma) in CREATININE_DISTRIBUTIONS[person.sex]:
@@ -126,7 +127,7 @@ def _choose_creatinine_baseline(person, epoch):
 # Generate a random sample of n people, with an age distribution at the epoch
 # that matches that seen across the London boroughs, according to the census
 # age distribution data passed as ages_filename.
-def generate_people(n, epoch, ages_filename):
+def generate_people(n, epoch, ages_filename, baseline_creatinine_multipliers):
     r = csv.reader(open(ages_filename))
     by_age = []
     for row in r:
@@ -143,7 +144,7 @@ def generate_people(n, epoch, ages_filename):
         age_days = random.randrange(0, 365)
         person.birthdate = datetime.date(epoch.year - age_years, epoch.month, epoch.day) - datetime.timedelta(days=age_days)
         person.sex = random.choice([SEX_MALE, SEX_FEMALE])
-        (person.creatinine_mu, person.creatinine_sigma, person.creatinine_multiplier) = _choose_creatinine_baseline(person, epoch)
+        (person.creatinine_mu, person.creatinine_sigma, person.creatinine_multiplier) = _choose_creatinine_baseline(person, epoch, baseline_creatinine_multipliers)
         people.append(person)
     return people
 

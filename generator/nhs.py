@@ -137,6 +137,20 @@ def test():
     runner = unittest.TextTestRunner()
     return runner.run(suite).wasSuccessful()
 
+def predict_from_file(filename):
+    r = csv.reader(open(filename))
+    headers = next(r)
+    age_column = headers.index("age")
+    sex_column = headers.index("sex")
+    creatinine_begin_column = headers.index("creatinine_date_0")
+    predictions = []
+    for row in r:
+        age = int(row[age_column])
+        sex = SEX_MALE if row[sex_column] == "m" else SEX_FEMALE
+        results = parse_creatinine_results(row[creatinine_begin_column:])
+        predictions.append(has_aki(age, sex, results, results[-1][0]))
+    return predictions
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--test", default=False, action="store_true")
@@ -145,18 +159,10 @@ def main():
     flags = parser.parse_args()
     if flags.test:
         sys.exit(0 if test() else 1)
-    r = csv.reader(open(flags.input))
-    headers = next(r)
-    age_column = headers.index("age")
-    sex_column = headers.index("sex")
-    creatinine_begin_column = headers.index("creatinine_date_0")
+    predicitions = predict_from_file(flags.input)
     w = csv.writer(open(flags.output, "w"))
     w.writerow(("aki",))
-    for row in r:
-        age = int(row[age_column])
-        sex = SEX_MALE if row[sex_column] == "m" else SEX_FEMALE
-        results = parse_creatinine_results(row[creatinine_begin_column:])
-        predicted = has_aki(age, sex, results, results[-1][0])
+    for predicted in predicitions:
         w.writerow(("y" if predicted else "n",))
 
 if __name__ == "__main__":
