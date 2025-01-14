@@ -38,7 +38,6 @@ def read_aki(filename):
     r = csv.reader(open(filename))
     headers = next(r)
     aki_column = headers.index("aki")
-    next(r) # skip headers
     return [row[aki_column] == "y" or row[aki_column]== "1" for row in r]
 
 def main():

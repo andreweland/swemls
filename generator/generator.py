@@ -12,8 +12,12 @@ from hl7apy.core import Message
 from hl7apy.consts import VALIDATION_LEVEL
 from hl7apy.parser import parse_message
 
-import nhs
-import population
+try:
+    from . import nhs
+    from . import population
+except ImportError:
+    import nhs
+    import population
 
 # 800 beds, 20 admissions per day, implies an average stay of 40 days.
 # Emperically we need a mean of ~30 admissions to stabalise around
@@ -142,7 +146,7 @@ AKI_AGE_FACTORS = [
     ((85, 100), 0.16 / 0.218),
 ]
 
-def inject_aki_blood_test_events(events, by_mrn, epoch, delay):
+def inject_aki_blood_test_events(generation_args, events, by_mrn, epoch, delay):
     start = combine_date_time(epoch + delay, datetime.time(0, 0, 0))
     had_aki = set()
     previous_results = {}
@@ -160,7 +164,7 @@ def inject_aki_blood_test_events(events, by_mrn, epoch, delay):
             else:
                 raise AssertionError()
             if len(previous_results.get(mrn, [])) > 0 and not mrn in had_aki and random.random() < BASE_AKI_PROBABILTY * age_factor:
-                result = population.choose_creatinine_for_aki(person, previous_results[person.mrn], epoch)
+                result = population.choose_creatinine_for_aki(person, previous_results[person.mrn], epoch, generation_args.aki_creatinine_multipliers)
                 yield (now, (EVENT_BLOOD_TEST_AKI, mrn, result))
                 replaced = True
                 had_aki.add(mrn)
@@ -391,6 +395,58 @@ HISTORY_OUTPUT_FILENAME = "history.csv"
 AKI_OUTPUT_FILENAME = "akis.csv"
 TRAINING_OUTPUT_FILENAME = "training.csv"
 
+class GenerationArgs:
+
+    def __init__(self):
+        self.days = 365
+        self.history = 3 * 30
+        self.mean_daily_admits = 30
+        self.population_size = 10000
+        self.aki_creatinine_multipliers = population.AKI_CREATININE_MULTIPLIERS
+        self.baseline_creatinine_multipliers = population.BASELINE_CREATININE_MULTIPLIERS
+        self.output_mllp = True
+        self.output_training = True
+
+def generate(generation_args, data_directory, output):
+    population_filename = os.path.join(data_directory, POPULATION_FILENAME)
+    surnames_filename = os.path.join(data_directory, SURNAMES_FILENAME)
+    male_forenames_filename = os.path.join(data_directory, MALE_FORENAMES_FILENAME)
+    female_forenames_filename = os.path.join(data_directory, FEMALE_FORENAMES_FILENAME)
+
+    epoch = datetime.date(2024, 1, 1)
+    people = population.generate_people(generation_args.population_size, epoch, population_filename, generation_args.baseline_creatinine_multipliers)
+    population.add_names(people, surnames_filename, female_forenames_filename, male_forenames_filename)
+
+    for person, mrn in zip(people, random.sample(range(MIN_MRN, MAX_MRN), len(people))):
+        person.mrn = mrn
+    by_mrn = {}
+    for person in people:
+        by_mrn[person.mrn] = person
+
+    times = HospitalTimesSampler()
+    adt_events = generate_admit_discharge_events(people, times, generation_args.days + generation_args.history, generation_args.mean_daily_admits)
+    all_events = add_blood_test_events(adt_events, times, by_mrn)
+    aki_events = list(inject_aki_blood_test_events(generation_args, all_events, by_mrn, epoch, datetime.timedelta(days=generation_args.history)))
+    historical_events, following_events = wait_until(aki_events, epoch + datetime.timedelta(days=generation_args.history))
+    following_events = list(following_events)
+    admit_events = collapse_admits(historical_events)
+    print(f"initial admits: {len(admit_events)}")
+    if generation_args.output_mllp:
+        print("write: mllp")
+        mllp_filename = os.path.join(output, MLLP_OUTPUT_FILENAME)
+        output_mllp(admit_events + following_events, mllp_filename, by_mrn)
+        print("write: historical events")
+        history_filename = os.path.join(output, HISTORY_OUTPUT_FILENAME)
+        output_history(historical_events, by_mrn, history_filename)
+    print("write: expected aki")
+    aki_filename = os.path.join(output, AKI_OUTPUT_FILENAME)
+    historical_results = build_results(historical_events)
+    output_aki(following_events, by_mrn, historical_results, epoch, aki_filename)
+    if generation_args.output_training:
+        print("write: training")
+        training_filename = os.path.join(output, TRAINING_OUTPUT_FILENAME)
+        output_training(aki_events, by_mrn, epoch, training_filename)
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--data", default="../data")
@@ -405,43 +461,13 @@ def main():
     if flags.aggregate:
         return aggregate(flags.mllp)
 
-    epoch = datetime.date(2024, 1, 1)
+    generation_args = GenerationArgs()
+    generation_args.days = flags.days
+    generation_args.history = flags.history
+    generation_args.mean_daily_admits = flags.mean_daily_admits
+    generation_args.population_size = flags.population_size
 
-    population_filename = os.path.join(flags.data, POPULATION_FILENAME)
-    surnames_filename = os.path.join(flags.data, SURNAMES_FILENAME)
-    male_forenames_filename = os.path.join(flags.data, MALE_FORENAMES_FILENAME)
-    female_forenames_filename = os.path.join(flags.data, FEMALE_FORENAMES_FILENAME)
-
-    people = population.generate_people(flags.population_size, epoch, population_filename)
-    population.add_names(people, surnames_filename, female_forenames_filename, male_forenames_filename)
-
-    for person, mrn in zip(people, random.sample(range(MIN_MRN, MAX_MRN), len(people))):
-        person.mrn = mrn
-    by_mrn = {}
-    for person in people:
-        by_mrn[person.mrn] = person
-
-    times = HospitalTimesSampler()
-    adt_events = generate_admit_discharge_events(people, times, flags.days + flags.history, flags.mean_daily_admits)
-    all_events = add_blood_test_events(adt_events, times, by_mrn)
-    aki_events = list(inject_aki_blood_test_events(all_events, by_mrn, epoch, datetime.timedelta(days=flags.history)))
-    historical_events, following_events = wait_until(aki_events, epoch + datetime.timedelta(days=flags.history))
-    following_events = list(following_events)
-    admit_events = collapse_admits(historical_events)
-    print(f"initial admits: {len(admit_events)}")
-    print("write: mllp")
-    mllp_filename = os.path.join(flags.output, MLLP_OUTPUT_FILENAME)
-    output_mllp(admit_events + following_events, mllp_filename, by_mrn)
-    print("write: historical events")
-    history_filename = os.path.join(flags.output, HISTORY_OUTPUT_FILENAME)
-    output_history(historical_events, by_mrn, history_filename)
-    print("write: expected aki")
-    aki_filename = os.path.join(flags.output, AKI_OUTPUT_FILENAME)
-    historical_results = build_results(historical_events)
-    output_aki(following_events, by_mrn, historical_results, epoch, aki_filename)
-    print("write: training")
-    training_filename = os.path.join(flags.output, TRAINING_OUTPUT_FILENAME)
-    output_training(aki_events, by_mrn, epoch, training_filename)
+    generate(generation_args, flags.data, flags.output)
 
 if __name__ == "__main__":
     main()
