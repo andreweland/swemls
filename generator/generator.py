@@ -392,7 +392,7 @@ MALE_FORENAMES_FILENAME = "male-forenames.txt"
 
 MLLP_OUTPUT_FILENAME = "messages.mllp"
 HISTORY_OUTPUT_FILENAME = "history.csv"
-AKI_OUTPUT_FILENAME = "akis.csv"
+AKI_OUTPUT_FILENAME = "aki.csv"
 TRAINING_OUTPUT_FILENAME = "training.csv"
 
 class GenerationArgs:

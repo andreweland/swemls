@@ -787,6 +787,10 @@ func NewHospital(options *HospitalOptions) (*Hospital, error) {
 		h.now = func() RealTime { return RealTime(time.Now()) }
 	}
 
+	if h.log == nil {
+		h.log = log.Default()
+	}
+
 	h.mllpConnections = make(chan *MLLPConnection, MLLPAcceptQueueLength)
 
 	h.logContext, h.logCancel = context.WithCancel(context.Background())
@@ -1177,6 +1181,11 @@ func (b *BackstageUI) Run() error {
 	handler := http.NewServeMux()
 	handler.Handle("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		b.serveUI(w, r)
+	}))
+	handler.Handle("/healthy", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Content-Type", "text/plain")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("ok\n"))
 	}))
 	handler.Handle("/metrics", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		b.serveMetrics(w, r)
