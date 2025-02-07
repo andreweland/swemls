@@ -1120,8 +1120,10 @@ func (h *Hospital) serveMLLPConnection(c *MLLPConnection) (*MLLPConnection, erro
 
 		// Allow for pages before a message is acked
 		if m.HasObservation && m.ObservationCreatinine {
+			h.lock.Lock()
 			h.lastResultSimulatedTime[m.MRN] = m.ObservationTime
 			h.resultRealTime[m.ObservationTime] = h.now()
+			h.lock.Unlock()
 		}
 
 		if err := c.Write(m.RawMessage); errors.Is(err, io.EOF) {
