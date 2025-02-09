@@ -1078,7 +1078,7 @@ func (h *Hospital) serveMLLPConnections() error {
 		h.metrics.ConnectionTime = time.Now()
 		h.lock.Unlock()
 		if h.rewindOnNewConnections {
-			h.handleEvent(&Event{Type: EventTypeRewind})
+			h.handleEvent(&Event{Type: EventTypeRewind, SimulatedTime: h.startSimulatedTime})
 		}
 		addr := next.C.RemoteAddr()
 		h.log.Printf("%s: mllp: connected to %s", h.name, addr)
