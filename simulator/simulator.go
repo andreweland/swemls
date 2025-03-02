@@ -653,10 +653,12 @@ func (e *EventLog) Log(event *Event) {
 func (e *EventLog) RecentEvents() []Event {
 	e.lock.Lock()
 	defer e.lock.Unlock()
-	recent := make([]Event, 0, RecentEventLogSize)
+	var recent []Event
 	if len(e.recent) < RecentEventLogSize {
+		recent = make([]Event, len(e.recent))
 		copy(recent, e.recent)
 	} else {
+		recent = make([]Event, 0, RecentEventLogSize)
 		i := e.i
 		start := e.i
 		for {
