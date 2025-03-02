@@ -1,0 +1,11 @@
+FROM ubuntu:oracular AS swemls-build
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get -yq install golang-go ca-certificates
+COPY go.mod /simulator/
+COPY go.sum /simulator/
+COPY simulator/simulator.go /simulator/
+RUN cd /simulator; go build -o simulator
+FROM ubuntu:oracular
+COPY --from=swemls-build /simulator/simulator /simulator/bin/
+COPY simulator/simulator.html /simulator/html/
+COPY simulator/simulator.css /simulator/html/
+ENTRYPOINT ["/simulator/bin/simulator", "--html=/simulator/html"]
